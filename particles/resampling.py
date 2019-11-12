@@ -440,7 +440,7 @@ def resampling(scheme, W, M=None):
 
 
 @jit
-def inverse_cdf(su, W):
+def inverse_cdf(su : np.ndarray, W : np.ndarray):
     """Inverse CDF algorithm for a finite distribution. 
 
         Parameters
@@ -457,9 +457,8 @@ def inverse_cdf(su, W):
     """
     j = 0
     s = W[0]
-    M = su.shape[0]
-    A = np.empty(M, 'int')
-    for n in range(M):
+    A = np.empty_like(su, np.int32)
+    for n in range(su.shape[0]):
         while su[n] > s:
             j += 1
             s += W[j]
