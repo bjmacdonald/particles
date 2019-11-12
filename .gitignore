@@ -1,5 +1,7 @@
+*.dll
 *.py~
 *.pyc
+*.pyd
 *.so
 dist/
 build/
