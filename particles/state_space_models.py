@@ -146,7 +146,7 @@ Class                     Comments
 `StochVolLeverage`        Univariate stochastic volatility model with leverage 
 `MVStochVol`              Multivariate stochastic volatility model
 `BearingsOnly`            Bearings-only tracking
-`Gordon_etal`             Popular toy model often used as a benchmark
+`Gordon`             Popular toy model often used as a benchmark
 `DiscreteCox`             A discrete Cox model (Y_t|X_t is Poisson)
 `ThetaLogistic`           Theta-logistic model from Population Ecology
 ===================       =====================================================
@@ -394,8 +394,11 @@ class GuidedPF(Bootstrap):
     def Gamma(self, t, xp, u):
         return self.ssm.proposal(t, xp, self.data).ppf(u)
 
+class APFMixin():
+    def logeta(self, t, x):
+        return self.ssm.logeta(t, x, self.data)
 
-class AuxiliaryPF(GuidedPF):
+class AuxiliaryPF(GuidedPF, APFMixin):
     """Auxiliary particle filter for a given state-space model.
     
     Parameters
@@ -417,19 +420,17 @@ class AuxiliaryPF(GuidedPF):
     Argument ssm must implement methods `proposal0`, `proposal` and `logeta`.
     """
 
-    def logeta(self, t):
-        return self.ssm.logeta(t, self.data)
+    pass
 
 
-class AuxiliaryBootstrap(Bootstrap):
+class AuxiliaryBootstrap(Bootstrap, APFMixin):
     """Base class for auxiliary bootstrap particle filters
 
     This is an APF, such that the proposal kernel is set to the transition 
     kernel of the model
     """
 
-    def logeta(self, t):
-        return self.ssm.logeta(t, self.data)
+    pass
 
 
 ################################
@@ -533,7 +534,7 @@ class StochVolLeverage(StochVol):
                             scale=std_x * np.sqrt(1. - self.phi**2))
 
 
-class Gordon_etal(StateSpaceModel):
+class Gordon(StateSpaceModel):
     r"""Popular toy example that appeared initially in Gordon et al (1993).
 
     .. math:: 

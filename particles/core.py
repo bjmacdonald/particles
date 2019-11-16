@@ -211,9 +211,6 @@ class SMC(object):
             approximated
         N: int, optional (default=100)
             number of particles 
-        seed: int, optional 
-            used to seed the random generator when starting the algorithm
-            default=None, in that case the rng is not seeded
         qmc: {True, False}
             if True use the Sequential quasi-Monte Carlo version (the two
             options resampling and ESSrmin are then ignored)
@@ -272,7 +269,6 @@ class SMC(object):
     def __init__(self,
                  fk=None,
                  N=100,
-                 seed=None,
                  qmc=False,
                  resampling="systematic",
                  ESSrmin=0.5, 
@@ -283,7 +279,6 @@ class SMC(object):
 
         self.fk = fk
         self.N = N
-        self.seed = seed
         self.qmc = qmc
         self.resampling = resampling
         self.ESSrmin = ESSrmin
@@ -335,8 +330,8 @@ class SMC(object):
 
     def generate_particles(self):
         if self.qmc:
-            # must be (N,) if du=1
             u = qmc.sobol(self.N, self.fk.du).squeeze()
+            # squeeze: must be (N,) if du=1
             self.X = self.fk.Gamma0(u)
         else:
             self.X = self.fk.M0(self.N)
@@ -392,8 +387,6 @@ class SMC(object):
         if self.fk.done(self):
             raise StopIteration
         if self.t == 0:
-            if self.seed:
-                random.seed(self.seed)
             self.generate_particles()
         else:
             self.setup_auxiliary_weights()  # APF
