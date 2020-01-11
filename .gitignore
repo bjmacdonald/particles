@@ -3,6 +3,7 @@
 *.pyc
 *.pyd
 *.so
+.ipynb_checkpoints
 dist/
 build/
 particles.egg-info/

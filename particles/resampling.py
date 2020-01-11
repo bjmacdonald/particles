@@ -439,8 +439,8 @@ def resampling(scheme, W, M=None):
         raise ValueError('%s: not a valid resampling scheme' % name)
 
 
-@jit(nopython=True)
-def inverse_cdf(su : np.ndarray, W : np.ndarray):
+@jit()
+def inverse_cdf(su, W):
     """Inverse CDF algorithm for a finite distribution. 
 
         Parameters
