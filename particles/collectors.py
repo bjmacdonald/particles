@@ -16,7 +16,7 @@ bit more general that that. Here is a simple example::
     # define some_fk_model
     # ...
     my_alg = particles.SMC(fk=some_fk_model, N=100, moments=True,
-                        naive_online_smooth=True)
+                           naive_online_smooth=True)
     my_alg.run()
     print(my_alg.summaries.moments)  # print a list of moments
     print(my_alg.summaries.naive_online_smooth)  # print a list of estimates
@@ -163,16 +163,30 @@ as follows::
 
 If option `paris` is set to True, then the default value (2) is used.
 
-Custom collectors (collectors defined by the user)
-==================================================
+User-defined collectors
+=======================
 
-Not implemented, but let me know if you have user cases in mind for this
-feature.
+You may implement your own collectors as follows::
+
+    import collectors
+
+    class ToyCollector(collectors.Collector):
+        summary_name = 'toy'
+        def fetch(self, smc):  # smc is the particles.SMC instance
+            return smc.X[self.arg]
+            # self.arg is the argument passed to the collector
+
+Once this is done, you may use this new collector exactly as the other
+ones::
+
+    pf = particles.SMC(N=30, fk=some_fk_model, toy=3)
+
+Then ``pf.summaries.toy`` will be a list of the summaries collected at each
+time by the ``fetch`` method. 
+
 """
 
 from __future__ import division, print_function
-
-import numpy as np
 
 from particles import resampling as rs
 
