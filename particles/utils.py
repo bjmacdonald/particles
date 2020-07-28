@@ -46,25 +46,23 @@ replace by more legible labels; e.g. option ` model` of class `SMC`.
 `multiplexer` also accepts three extra keyword arguments (whose name may not
 therefore be used as keyword arguments for function f):
 
-* ``nprocs``: if >0, number of CPU cores to use in parallel; if <=0, number
-  of cores *not* to use; in particular, ``nprocs=0`` means all CPU cores must
-  be used.
+* ``nprocs`` (default=1): if >0, number of CPU cores to use in parallel; if
+  <=0, number of cores *not* to use; in particular, ``nprocs=0`` means all CPU
+  cores must be used.
 * ``nruns`` (default=1): evaluate f *nruns* time for each combination of arguments;
   an entry `run` (ranging from 0 to nruns-1) is added to the output dictionaries.
-  This is mostly useful when the output of ``f`` is random.
-  * ``seeding`` (default: True if ``nruns``>1, False otherwise):  if True, seeds
+* ``seeding`` (default: True if ``nruns``>1, False otherwise):  if True, seeds
   the pseudo-random generator before each call of function `f` with a different
-  seed. See second warning below.
-
-.. warning ::
-    Option ``nprocs`` rely on the standard library `multiprocessing`,
-    whose performance and behaviour seems to be OS-dependent. In particular,
-    it may not work well on Windows.
+  seed; see below. 
 
 .. warning ::
     Library `multiprocessing` generates identical workers, up to the state of
-    the random generator. Thus, as soon as more than one core is used, we
-    strongly recommend to set option ``seeding`` above to True.
+    the Numpy random generator. If your function involves random numbers: (a)
+    set option ``seeding`` to True (otherwise, you will get
+    identical results from all your workers); (b) make sure the function f does
+    not rely on scipy frozen distributions, as these distributions also
+    freeze the states. For instance, do not use any frozen distribution when
+    defining your own Feynman-Kac object. 
 
 .. seealso :: `multiSMC`
 
@@ -72,12 +70,16 @@ therefore be used as keyword arguments for function f):
 
 from __future__ import division, print_function
 
-import copy
 import functools
 import itertools
 import multiprocessing
-from numpy import random
 import time
+
+import numpy as np
+from numpy import random
+
+MAX_INT_32 = np.iinfo(np.int32).max
+
 
 def timer(method):
     @functools.wraps(method)
@@ -86,7 +88,9 @@ def timer(method):
         out = method(self, **kwargs)
         self.cpu_time = time.perf_counter() - starting_time
         return out
+
     return timed_method
+
 
 def cartesian_lists(d):
     """
@@ -186,24 +190,22 @@ def distinct_seeds(k):
     seeds = []
     for _ in range(k):
         while True:
-            s = random.randint(2**32 - 1)
+            s = random.randint(MAX_INT_32)
             if s not in seeds:
                 break
         seeds.append(s)
     return seeds
 
 
-def seeder(func):
-    """Decorator to seed the pseudo-random generator before evaluating a
-    function.
-    """
-    @functools.wraps(func)
-    def seeded_func(**kwargs):
+class seeder(object):
+    def __init__(self, func):
+        self.func = func
+
+    def __call__(self, **kwargs):
         seed = kwargs.pop('seed', None)
         if seed:
             random.seed(seed)
-        return func(**kwargs)
-    return seeded_func
+        return self.func(**kwargs)
 
 
 def multiplexer(f=None, nruns=1, nprocs=1, seeding=None, **args):
