@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 ## Future release
 ### Added
 - distributions: dirichlet
+- smc_samplers: magic method __len__ added to ThetaParticles
 
 ## [0.4] - 2023-09-01
 # Blog post: TBA
